@@ -27,24 +27,21 @@
         android:layout_marginTop="21dp"
         android:layout_centerHorizontal="true" />
 
-    <TextView
+    <ListView
         android:id="@+id/WiFiListData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/placeholder"
-        android:textSize="8pt"
-        android:layout_marginTop="33dp"
         android:layout_below="@+id/WiFiListTitle"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignParentEnd="true" />
 
     <TextView
         android:id="@+id/WiFiListTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/wifi_list_title"
-        android:layout_marginTop="66dp"
         android:layout_below="@+id/CurrentWiFiData"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp" />
 
 
 </RelativeLayout>

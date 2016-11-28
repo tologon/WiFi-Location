@@ -15,20 +15,30 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class WifiInformation extends AppCompatActivity {
     private Handler mHandler;
-    private TextView currentWiFiData, wifiListData;
+    private ListView wifiListData;
+    private TextView currentWiFiData;
     private Context context = this;
     private ConnectivityManager cm;
     private WifiManager wifiManager;
     private WifiReceiver wifiReceiver;
     private final String NO_CONNECTION = "No Wi-Fi connection";
     private final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
+    private final String SCHOOL_NETWORK_1 = "eduroam";
+    private final String SCHOOL_NETWORK_2 = "LeopardGuest";
+    private ArrayAdapter<String> adapter;
+    private ArrayList<String> networks = new ArrayList<>();
+    private String AP_MAC;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +46,10 @@ public class WifiInformation extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_information);
         currentWiFiData = (TextView) findViewById(R.id.CurrentWiFiData);
-        wifiListData = (TextView) findViewById(R.id.WiFiListData);
+        wifiListData = (ListView) findViewById(R.id.WiFiListData);
+        adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, networks);
+        wifiListData.setAdapter(adapter);
         setNetworkStatus();
 
         requestPermission();
@@ -44,8 +57,6 @@ public class WifiInformation extends AppCompatActivity {
         registerReceiver(wifiReceiver, new IntentFilter(
                 WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
         ));
-        wifiManager.startScan();
-        Toast.makeText(context, "Starting WiFi scan..", Toast.LENGTH_LONG).show();
 
         mHandler = new Handler();
         startRepeatingTask();
@@ -60,7 +71,7 @@ public class WifiInformation extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         String SSID = wifiInfo.getSSID().replace('\"', ' ');
         int RSSI = wifiInfo.getRssi();
-        String AP_MAC = wifiInfo.getBSSID();
+        AP_MAC = wifiInfo.getBSSID();
         double frequency = wifiInfo.getFrequency() * 1.0 / 1000;
         int speed = wifiInfo.getLinkSpeed();
 
@@ -73,17 +84,10 @@ public class WifiInformation extends AppCompatActivity {
         return sb.toString();
     }
 
-    public String getWiFiList() {
-        if(!networkStatus()) {
-            return NO_CONNECTION;
-        }
-
-        return wifiReceiver.getResults();
-    }
-
     @Override
     public void onDestroy() {
         stopRepeatingTask();
+        registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         unregisterReceiver(wifiReceiver);
         super.onDestroy();
     }
@@ -113,13 +117,15 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     Runnable mStatusChecker = new Runnable() {
-        int mInterval = 5000; // 1 millisecond = 1,000 value
+        int mInterval = 10; // 1 millisecond = 1,000 value
 
         @Override
         public void run() {
             try {
                 String currentNetwork = getWiFiNetworkInfo();
                 currentWiFiData.setText(currentNetwork);
+                wifiManager.startScan();
+                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
@@ -144,23 +150,24 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     class WifiReceiver extends BroadcastReceiver {
-        String results;
 
         public void onReceive(Context c, Intent i) {
+            adapter.clear();
+            if(!networkStatus()) { return; }
+
             List<ScanResult> scanList = wifiManager.getScanResults();
-            String scanListLength = "# of WiFi networks: " + String.valueOf(scanList.size());
-            Toast.makeText(context, scanListLength, Toast.LENGTH_LONG).show();
-            StringBuilder sb = new StringBuilder();
+            Set<String> set = new HashSet<>();
+
+            String itemData;
             for(ScanResult item : scanList) {
-                sb.append(item.toString() + "\n");
+                if((item.SSID.equals(SCHOOL_NETWORK_1)
+                        || item.SSID.equals(SCHOOL_NETWORK_2))
+                        && !item.BSSID.equals(AP_MAC)) {
+                    itemData = "SSID: " + item.SSID + "\nRSSI: " + item.level + "\nMAC: " + item.BSSID;
+                    set.add(itemData);
+                }
             }
-
-            results = sb.toString();
-            wifiListData.setText(results);
-        }
-
-        public String getResults() {
-            return results;
+            adapter.addAll(set);
         }
     }
 
