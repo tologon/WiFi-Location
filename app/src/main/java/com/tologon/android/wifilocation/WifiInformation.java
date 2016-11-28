@@ -1,18 +1,22 @@
 package com.tologon.android.wifilocation;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -24,6 +28,7 @@ public class WifiInformation extends AppCompatActivity {
     private WifiManager wifiManager;
     private WifiReceiver wifiReceiver;
     private final String NO_CONNECTION = "No Wi-Fi connection";
+    private final int PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +38,14 @@ public class WifiInformation extends AppCompatActivity {
         currentWiFiData = (TextView) findViewById(R.id.CurrentWiFiData);
         wifiListData = (TextView) findViewById(R.id.WiFiListData);
         setNetworkStatus();
+
+        requestPermission();
+        wifiReceiver = new WifiReceiver();
+        registerReceiver(wifiReceiver, new IntentFilter(
+                WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
+        ));
+        wifiManager.startScan();
+        Toast.makeText(context, "Starting WiFi scan..", Toast.LENGTH_LONG).show();
 
         mHandler = new Handler();
         startRepeatingTask();
@@ -69,31 +82,44 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     @Override
-    public  void onDestroy() {
-        super.onDestroy();
+    public void onDestroy() {
         stopRepeatingTask();
         unregisterReceiver(wifiReceiver);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        unregisterReceiver(wifiReceiver);
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        super.onResume();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            registerReceiver(wifiReceiver, new IntentFilter(
+                    WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
+            ));
+            wifiManager.startScan();
+        }
     }
 
     Runnable mStatusChecker = new Runnable() {
-        int mInterval = 10; // 1 millisecond = 1,000 value
+        int mInterval = 5000; // 1 millisecond = 1,000 value
 
         @Override
         public void run() {
             try {
                 String currentNetwork = getWiFiNetworkInfo();
                 currentWiFiData.setText(currentNetwork);
-
-                if(wifiReceiver == null) {
-                    wifiReceiver = new WifiReceiver();
-                }
-
-                registerReceiver(wifiReceiver, new IntentFilter(
-                        WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
-                ));
-                wifiManager.startScan();
-                String nearbyNetworks = getWiFiList();
-                wifiListData.setText(nearbyNetworks);
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
@@ -122,16 +148,29 @@ public class WifiInformation extends AppCompatActivity {
 
         public void onReceive(Context c, Intent i) {
             List<ScanResult> scanList = wifiManager.getScanResults();
+            String scanListLength = "# of WiFi networks: " + String.valueOf(scanList.size());
+            Toast.makeText(context, scanListLength, Toast.LENGTH_LONG).show();
             StringBuilder sb = new StringBuilder();
             for(ScanResult item : scanList) {
                 sb.append(item.toString() + "\n");
             }
 
             results = sb.toString();
+            wifiListData.setText(results);
         }
 
         public String getResults() {
             return results;
+        }
+    }
+
+    public void requestPermission() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
+                    PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
+        }else{
+            wifiManager.startScan();
         }
     }
 }
