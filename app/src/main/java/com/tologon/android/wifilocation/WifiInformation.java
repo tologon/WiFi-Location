@@ -1,6 +1,8 @@
 package com.tologon.android.wifilocation;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -12,21 +14,41 @@ public class WifiInformation extends AppCompatActivity {
     private Handler mHandler;
     TextView WiFiView;
     Context context = this;
+    ConnectivityManager cm;
+    NetworkInfo activeNetwork;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_information);
         WiFiView = (TextView) findViewById(R.id.WiFiView);
+        setNetworkStatus();
 
         mHandler = new Handler();
         startRepeatingTask();
     }
 
-    public String getSignalStrength() {
+    public String getWiFiNetworkInfo() {
+        if(!networkStatus()) {
+            return "No Wi-Fi connection";
+        }
+
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        return String.valueOf(wifiInfo.getRssi());
+        StringBuilder sb = new StringBuilder();
+        String SSID = wifiInfo.getSSID().replace('\"', ' ');
+        int RSSI = wifiInfo.getRssi();
+        String AP_MAC = wifiInfo.getBSSID();
+        double frequency = wifiInfo.getFrequency() * 1.0 / 1000;
+        int speed = wifiInfo.getLinkSpeed();
+
+        sb.append("SSID:" + SSID + "\n");
+        sb.append("RSSI: " + RSSI + "\n");
+        sb.append("AP MAC: " + AP_MAC + "\n");
+        sb.append("Frequency: " + frequency + " GHz\n");
+        sb.append("Speed: " + speed + " Mbps\n");
+
+        return sb.toString();
     }
 
     @Override
@@ -41,19 +63,28 @@ public class WifiInformation extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                String RSSI = getSignalStrength();
-                WiFiView.setText(RSSI);
+                String info = getWiFiNetworkInfo();
+                WiFiView.setText(info);
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
         }
     };
 
-    void startRepeatingTask() {
+    private void startRepeatingTask() {
         mStatusChecker.run();
     }
 
-    void stopRepeatingTask() {
+    private void stopRepeatingTask() {
         mHandler.removeCallbacks(mStatusChecker);
+    }
+
+    private void setNetworkStatus() {
+        cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    }
+
+    private boolean networkStatus() {
+        activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
     }
 }
