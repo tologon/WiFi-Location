@@ -1,8 +1,12 @@
 package com.tologon.android.wifilocation;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -10,18 +14,24 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
+import java.util.List;
+
 public class WifiInformation extends AppCompatActivity {
     private Handler mHandler;
-    TextView WiFiView;
-    Context context = this;
-    ConnectivityManager cm;
-    NetworkInfo activeNetwork;
+    private TextView currentWiFiData, wifiListData;
+    private Context context = this;
+    private ConnectivityManager cm;
+    private WifiManager wifiManager;
+    private WifiReceiver wifiReceiver;
+    private final String NO_CONNECTION = "No Wi-Fi connection";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_information);
-        WiFiView = (TextView) findViewById(R.id.WiFiView);
+        currentWiFiData = (TextView) findViewById(R.id.CurrentWiFiData);
+        wifiListData = (TextView) findViewById(R.id.WiFiListData);
         setNetworkStatus();
 
         mHandler = new Handler();
@@ -30,10 +40,9 @@ public class WifiInformation extends AppCompatActivity {
 
     public String getWiFiNetworkInfo() {
         if(!networkStatus()) {
-            return "No Wi-Fi connection";
+            return NO_CONNECTION;
         }
 
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         StringBuilder sb = new StringBuilder();
         String SSID = wifiInfo.getSSID().replace('\"', ' ');
@@ -51,10 +60,19 @@ public class WifiInformation extends AppCompatActivity {
         return sb.toString();
     }
 
+    public String getWiFiList() {
+        if(!networkStatus()) {
+            return NO_CONNECTION;
+        }
+
+        return wifiReceiver.getResults();
+    }
+
     @Override
     public  void onDestroy() {
         super.onDestroy();
         stopRepeatingTask();
+        unregisterReceiver(wifiReceiver);
     }
 
     Runnable mStatusChecker = new Runnable() {
@@ -63,8 +81,19 @@ public class WifiInformation extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                String info = getWiFiNetworkInfo();
-                WiFiView.setText(info);
+                String currentNetwork = getWiFiNetworkInfo();
+                currentWiFiData.setText(currentNetwork);
+
+                if(wifiReceiver == null) {
+                    wifiReceiver = new WifiReceiver();
+                }
+
+                registerReceiver(wifiReceiver, new IntentFilter(
+                        WifiManager.SCAN_RESULTS_AVAILABLE_ACTION
+                ));
+                wifiManager.startScan();
+                String nearbyNetworks = getWiFiList();
+                wifiListData.setText(nearbyNetworks);
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
@@ -84,7 +113,25 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     private boolean networkStatus() {
-        activeNetwork = cm.getActiveNetworkInfo();
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    class WifiReceiver extends BroadcastReceiver {
+        String results;
+
+        public void onReceive(Context c, Intent i) {
+            List<ScanResult> scanList = wifiManager.getScanResults();
+            StringBuilder sb = new StringBuilder();
+            for(ScanResult item : scanList) {
+                sb.append(item.toString() + "\n");
+            }
+
+            results = sb.toString();
+        }
+
+        public String getResults() {
+            return results;
+        }
     }
 }
