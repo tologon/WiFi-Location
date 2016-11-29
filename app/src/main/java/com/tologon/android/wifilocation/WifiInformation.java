@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,9 +19,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class WifiInformation extends AppCompatActivity {
     private Handler mHandler;
@@ -39,6 +36,11 @@ public class WifiInformation extends AppCompatActivity {
     private ArrayAdapter<String> adapter;
     private ArrayList<String> networks = new ArrayList<>();
     private String AP_MAC;
+    private final String NO_LOCATION_IDENTIFICATION = "Couldn't identify the location.";
+    private final String CS_DEPARTMENT_BACK = "18:64:72:f3:41:72";
+    private final String CS_DEPARTMENT_CENTER = "18:64:72:f3:30:f2";
+    private final String CS_DEPARTMENT_FRONT = "18:64:72:f3:40:52";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,27 +64,67 @@ public class WifiInformation extends AppCompatActivity {
         startRepeatingTask();
     }
 
-    public String getWiFiNetworkInfo() {
+    public String getWITLocation() {
         if(!networkStatus()) {
             return NO_CONNECTION;
         }
+        String closestAP = closestAP();
 
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        StringBuilder sb = new StringBuilder();
-        String SSID = wifiInfo.getSSID().replace('\"', ' ');
-        int RSSI = wifiInfo.getRssi();
-        AP_MAC = wifiInfo.getBSSID();
-        double frequency = wifiInfo.getFrequency() * 1.0 / 1000;
-        int speed = wifiInfo.getLinkSpeed();
-
-        sb.append("SSID:" + SSID + "\n");
-        sb.append("RSSI: " + RSSI + "\n");
-        sb.append("AP MAC: " + AP_MAC + "\n");
-        sb.append("Frequency: " + frequency + " GHz\n");
-        sb.append("Speed: " + speed + " Mbps\n");
-
-        return sb.toString();
+        if(closestAP == null) {
+            return NO_LOCATION_IDENTIFICATION;
+        }
+        else if(closestAP.equals(CS_DEPARTMENT_BACK)) {
+            return "You are in the back of the CS department.";
+        }
+        else if(closestAP.equals(CS_DEPARTMENT_CENTER)) {
+            return "You are in the center of the CS department.";
+        }
+        else if(closestAP.equals(CS_DEPARTMENT_FRONT)) {
+            return "You are in the front of the CS department.";
+        }
+        else {
+            return NO_LOCATION_IDENTIFICATION;
+        }
     }
+
+    private String closestAP() {
+        String closestAP = null;
+        int bestRSSI = Integer.MIN_VALUE;
+
+        List<ScanResult> scanList = wifiManager.getScanResults();
+        for(ScanResult item : scanList) {
+            if(item.SSID.equals(SCHOOL_NETWORK_1) || item.SSID.equals(SCHOOL_NETWORK_2)) {
+                if(item.level > bestRSSI) {
+                    bestRSSI = item.level;
+                    closestAP = item.BSSID;
+                }
+            }
+        }
+
+        return closestAP;
+    }
+
+//    public String getWiFiNetworkInfo() {
+//        if(!networkStatus()) {
+//            return NO_CONNECTION;
+//        }
+//
+//        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+//        StringBuilder sb = new StringBuilder();
+//        String SSID = wifiInfo.getSSID().replace('\"', ' ');
+//        int RSSI = wifiInfo.getRssi();
+//        AP_MAC = wifiInfo.getBSSID();
+//        double frequency = wifiInfo.getFrequency() * 1.0 / 1000;
+//        int speed = wifiInfo.getLinkSpeed();
+//
+//        sb.append("SSID:" + SSID + "\n");
+//        sb.append("RSSI: " + RSSI + "\n");
+//        sb.append("AP MAC: " + AP_MAC + "\n");
+//        sb.append("Frequency: " + frequency + " GHz\n");
+//        sb.append("Speed: " + speed + " Mbps\n");
+//
+//        return sb.toString();
+//    }
 
     @Override
     public void onDestroy() {
@@ -122,8 +164,9 @@ public class WifiInformation extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                String currentNetwork = getWiFiNetworkInfo();
-                currentWiFiData.setText(currentNetwork);
+                //String currentNetwork = getWiFiNetworkInfo();
+                String currentLocation = getWITLocation();
+                currentWiFiData.setText(currentLocation);
                 wifiManager.startScan();
                 registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
             } finally {
@@ -155,6 +198,7 @@ public class WifiInformation extends AppCompatActivity {
             adapter.clear();
             if(!networkStatus()) { return; }
 
+            /*
             List<ScanResult> scanList = wifiManager.getScanResults();
             Set<String> set = new HashSet<>();
 
@@ -168,6 +212,7 @@ public class WifiInformation extends AppCompatActivity {
                 }
             }
             adapter.addAll(set);
+            */
         }
     }
 
