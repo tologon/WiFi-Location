@@ -260,7 +260,9 @@ public class WifiInformation extends AppCompatActivity {
 
             int xOnField = eventX - fieldImgXY[0];
             int yOnField = eventY - fieldImgXY[1];
-            Log.i(LOG_TAG, "on field (x, y) = " + xyString(xOnField, yOnField));
+            String locationInfo = "on field (x, y) = " + xyString(xOnField, yOnField);
+            Log.i(LOG_TAG, locationInfo);
+            Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
         }
         return super.onTouchEvent(event);
     }
