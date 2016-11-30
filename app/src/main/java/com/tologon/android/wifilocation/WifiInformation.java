@@ -14,9 +14,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,9 @@ public class WifiInformation extends AppCompatActivity {
     private final String CS_DEPARTMENT_BACK = "18:64:72:f3:41:72";
     private final String CS_DEPARTMENT_CENTER = "18:64:72:f3:30:f2";
     private final String CS_DEPARTMENT_FRONT = "18:64:72:f3:40:52";
+    private int fieldImgXY[] = new int[2];
+    private final String LOG_TAG = "LOCATION";
+    private ImageView mContentView;
 
 
     @Override
@@ -53,6 +60,7 @@ public class WifiInformation extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, networks);
         wifiListData.setAdapter(adapter);
         setNetworkStatus();
+        mContentView = (ImageView) findViewById(R.id.imageView);
 
         requestPermission();
         wifiReceiver = new WifiReceiver();
@@ -61,7 +69,7 @@ public class WifiInformation extends AppCompatActivity {
         ));
 
         mHandler = new Handler();
-        startRepeatingTask();
+//        startRepeatingTask();
     }
 
     public String getWITLocation() {
@@ -224,5 +232,40 @@ public class WifiInformation extends AppCompatActivity {
         }else{
             wifiManager.startScan();
         }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        // Use onWindowFocusChanged to get the placement of
+        // the image because we have to wait until the image
+        // has actually been placed on the screen  before we
+        // get the coordinates. That makes it impossible to
+        // do in onCreate, that would just give us (0, 0).
+        mContentView.getLocationOnScreen(fieldImgXY);
+
+        String locationInfo = "fieldImage location on screen: " + xyString(fieldImgXY[0], fieldImgXY[1]);
+        Log.i(LOG_TAG, locationInfo);
+        Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
+    }
+
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            Log.i(LOG_TAG, "touch event - down");
+
+            int eventX = (int) event.getX();
+            int eventY = (int) event.getY();
+            Log.i(LOG_TAG, "event (x, y) = " + xyString(eventX, eventY));
+
+            int xOnField = eventX - fieldImgXY[0];
+            int yOnField = eventY - fieldImgXY[1];
+            Log.i(LOG_TAG, "on field (x, y) = " + xyString(xOnField, yOnField));
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private String xyString(int x, int y) {
+        return "(" + x + ", " + y + ")";
     }
 }

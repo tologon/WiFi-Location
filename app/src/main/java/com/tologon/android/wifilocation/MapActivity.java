@@ -1,10 +1,11 @@
 package com.tologon.android.wifilocation;
 
 import android.annotation.SuppressLint;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -84,6 +85,9 @@ public class MapActivity extends AppCompatActivity {
         }
     };
 
+    private int fieldImgXY[] = new int[2];
+    private final String LOG_TAG = "LOCATION";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -161,5 +165,39 @@ public class MapActivity extends AppCompatActivity {
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        // Use onWindowFocusChanged to get the placement of
+        // the image because we have to wait until the image
+        // has actually been placed on the screen  before we
+        // get the coordinates. That makes it impossible to
+        // do in onCreate, that would just give us (0, 0).
+        mContentView.getLocationOnScreen(fieldImgXY);
+
+        Log.i(LOG_TAG, "fieldImage location on screen: " +
+                xyString(fieldImgXY[0], fieldImgXY[1]));
+    }
+
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            Log.i(LOG_TAG, "touch event - down");
+
+            int eventX = (int) event.getX();
+            int eventY = (int) event.getY();
+            Log.i(LOG_TAG, "event (x, y) = " + xyString(eventX, eventY));
+
+            int xOnField = eventX - fieldImgXY[0];
+            int yOnField = eventY - fieldImgXY[1];
+            Log.i(LOG_TAG, "on field (x, y) = " + xyString(xOnField, yOnField));
+        }
+        return super.onTouchEvent(event);
+    }
+
+    private String xyString(int x, int y) {
+        return "(" + x + ", " + y + ")";
     }
 }
