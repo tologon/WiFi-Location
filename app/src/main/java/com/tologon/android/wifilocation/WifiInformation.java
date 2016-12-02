@@ -19,7 +19,6 @@ import android.view.MotionEvent;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +50,7 @@ public class WifiInformation extends AppCompatActivity {
     private final String backLocation = "You are in the back of the CS department.";
     private final String centerLocation = "You are in the center of the CS department.";
     private final String frontLocation = "You are in the front of the CS department.";
+    private ScanResult[] scannedAPs;
     private String lastLocation;
 
 
@@ -67,6 +67,8 @@ public class WifiInformation extends AppCompatActivity {
         wifiListData.setAdapter(adapter);
         setNetworkStatus();
         mContentView = (MyImageView) findViewById(R.id.imageView);
+        // store new results for updating WiFi coverage/range
+        scannedAPs = new ScanResult[3];
 
         requestPermission();
         wifiReceiver = new WifiReceiver();
@@ -115,6 +117,16 @@ public class WifiInformation extends AppCompatActivity {
                     bestRSSI = item.level;
                     closestAP = item.BSSID;
                 }
+            }
+
+            if(item.BSSID.equals(CS_DEPARTMENT_FRONT)) {
+                scannedAPs[MyImageView.FRONT] = item;
+            }
+            else if(item.BSSID.equals(CS_DEPARTMENT_CENTER)) {
+                scannedAPs[MyImageView.CENTER] = item;
+            }
+            else if(item.BSSID.equals(CS_DEPARTMENT_BACK)) {
+                scannedAPs[MyImageView.BACK] = item;
             }
         }
 
@@ -176,7 +188,7 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     Runnable mStatusChecker = new Runnable() {
-        int mInterval = 5000; // 1 millisecond = 1,000 value
+        int mInterval = 10; // 1 millisecond = 1,000 value
         int minRadius = 100;
         int maxRadius = 500; // its actually maxRadius - minRadius
         int userX, userY;
@@ -185,14 +197,14 @@ public class WifiInformation extends AppCompatActivity {
         public void run() {
             try {
                 //String currentNetwork = getWiFiNetworkInfo();
+                wifiManager.startScan();
                 String currentLocation = getWITLocation();
                 currentWiFiData.setText(currentLocation);
-                wifiManager.startScan();
                 registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                setRadiuses();
 
-                randomlySetRadiuses();
+                //randomlySetRadiuses();
                 findUser();
-
                 mContentView.setUser(userX, userY);
                 //String userPosition = "USER POS: " + xyString(userX, userY);
                 //Toast.makeText(context, userPosition, Toast.LENGTH_SHORT).show();
@@ -267,10 +279,51 @@ public class WifiInformation extends AppCompatActivity {
             c3.x = mContentView.getFrontX();
             c3.y = mContentView.getFrontY();
             c3.r = mContentView.getFrontRadius();
-            Circle[] circles = {c2, c3, c1};
+            Circle[] circles = {c2, c3, c1}; // best option
+            //Circle[] circles = {c1, c2, c3};
             return circles;
         }
     };
+
+    private void setRadiuses() {
+        if(scannedAPs == null) {
+            return;
+        }
+
+        for(int i=0; i < scannedAPs.length; i++) {
+            if(scannedAPs[i] != null) {
+                setRadius(i, scannedAPs[i]);
+            }
+        }
+    }
+
+    private void setRadius(int wifiAP, ScanResult scannedAP) {
+        int multiplier = 1;
+        int numLevels = 100;
+        int divisor = 50000;
+        int distance = wifiManager.calculateSignalLevel(scannedAP.level, numLevels) * multiplier;
+        //int distance = calculateDistance(scannedAP.level, scannedAP.frequency) * multiplier;
+        if(distance > 0) {
+            //Toast.makeText(context, "distance: " + distance, Toast.LENGTH_SHORT).show();
+            mContentView.setWifiRadius(wifiAP, divisor / distance);
+        } else {
+            mContentView.setWifiRadius(wifiAP, divisor / MyImageView.DEFAULT_RADIUS);
+        }
+    }
+
+    private boolean notLargeDiff(int newRadius, int oldRadius) {
+        int diff = Math.abs(oldRadius - newRadius);
+        //Log.i("RADIUS", "old: " + oldRadius + ", new: " + newRadius);
+        int threshold = 200;
+        return diff <= threshold || oldRadius == 50;
+    }
+
+    private int calculateDistance(int levelInDbm, int freqInMhz) {
+        double level = levelInDbm * 1.0;
+        double freq = freqInMhz * 1.0;
+        double exp = (27.55 - (20 * Math.log10(freq)) + Math.abs(level)) / 20.0;
+        return (int) Math.pow(10.0, exp);
+    }
 
     private class Circle {
         int x, y, r;
@@ -324,7 +377,7 @@ public class WifiInformation extends AppCompatActivity {
             requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
                     PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION);
             //After this point you wait for callback in onRequestPermissionsResult(int, String[], int[]) overriden method
-        }else{
+        } else{
             wifiManager.startScan();
         }
     }
@@ -342,7 +395,7 @@ public class WifiInformation extends AppCompatActivity {
 
         String locationInfo = "fieldImage location on screen: " + xyString(fieldImgXY[0], fieldImgXY[1]);
         Log.i(LOG_TAG, locationInfo);
-        Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
     }
 
     public boolean onTouchEvent(MotionEvent event) {
@@ -357,7 +410,7 @@ public class WifiInformation extends AppCompatActivity {
             int yOnField = eventY - fieldImgXY[1];
             String locationInfo = "on field (x, y) = " + xyString(xOnField, yOnField);
             Log.i(LOG_TAG, locationInfo);
-            Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(context, locationInfo, Toast.LENGTH_SHORT).show();
         }
         return super.onTouchEvent(event);
     }
