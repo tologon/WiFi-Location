@@ -14,11 +14,17 @@ import android.widget.ImageView;
 public class MyImageView extends ImageView {
     private Paint wiFiPaint, userPaint;
     private final int TRANSPARENCY = 100;
-    private final int WIFI_RADIUS = 50, USER_RADIUS = 20;
+    private final int FRONT = 1, CENTER = 2, BACK = 3;
+    private int FRONT_AP_RADIUS = 50;
+    private int CENTER_AP_RADIUS = 50;
+    private int BACK_AP_RADIUS = 50;
+
+    private int USER_RADIUS = 20;
     private int backX = 118, backY = 569;
     private int centerX = 144, centerY = 1304;
     private int frontX = 672, frontY = 1424;
     private int userX, userY;
+
 
     public MyImageView(Context context) {
         super(context);
@@ -54,7 +60,7 @@ public class MyImageView extends ImageView {
         wiFiPaint.setAlpha(TRANSPARENCY);
 
         userPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        userPaint.setColor(Color.CYAN);
+        userPaint.setColor(Color.RED);
         userPaint.setAlpha(TRANSPARENCY);
     }
 
@@ -71,21 +77,41 @@ public class MyImageView extends ImageView {
         return userY;
     }
 
+    public void changeWifiRadius(int wifiAP, int newRadius) {
+        switch (wifiAP) {
+            case FRONT:     FRONT_AP_RADIUS = newRadius;
+                            break;
+            case CENTER:    CENTER_AP_RADIUS = newRadius;
+                            break;
+            case BACK:      BACK_AP_RADIUS = newRadius;
+                            break;
+        }
+    }
+
+    public int getWifiRadius(int wifiAP) {
+        switch (wifiAP) {
+            case FRONT:     return FRONT_AP_RADIUS;
+            case CENTER:    return CENTER_AP_RADIUS;
+            case BACK:      return BACK_AP_RADIUS;
+            default:        return 1;
+        }
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         // WiFi Access Point in the back of CS department
-        drawWIFIPoint(backX, backY, canvas);
+        drawWIFIPoint(backX, backY, FRONT_AP_RADIUS, canvas);
         // WiFi Access Point in the middle of CS department
-        drawWIFIPoint(centerX, centerY, canvas);
+        drawWIFIPoint(centerX, centerY, CENTER_AP_RADIUS, canvas);
         // WiFi Access Point in the front of CS department
-        drawWIFIPoint(frontX, frontY, canvas);
+        drawWIFIPoint(frontX, frontY, BACK_AP_RADIUS, canvas);
         // User position
         drawUser(userX, userY, canvas);
     }
 
-    private void drawWIFIPoint(int x, int y, Canvas canvas) {
-        canvas.drawCircle(x, y, WIFI_RADIUS, wiFiPaint);
+    private void drawWIFIPoint(int x, int y, int radius, Canvas canvas) {
+        canvas.drawCircle(x, y, radius, wiFiPaint);
     }
 
     private void drawUser(int x, int y, Canvas canvas) {
