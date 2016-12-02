@@ -22,16 +22,6 @@
         android:layout_centerHorizontal="true"
         android:visibility="invisible"/>
 
-    <TextView
-        android:id="@+id/CurrentWiFiData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/placeholder"
-        android:textSize="8pt"
-        android:layout_marginTop="21dp"
-        android:layout_centerHorizontal="true"
-        android:visibility="invisible"/>
-
     <ListView
         android:id="@+id/WiFiListData"
         android:layout_width="wrap_content"
@@ -55,7 +45,18 @@
         android:layout_height="wrap_content"
         android:id="@+id/imageView"
         android:layout_alignParentEnd="true"
-        android:scaleType="fitXY"/>
+        android:scaleType="fitXY"
+        android:layout_below="@+id/WiFiListTitle" />
+
+    <TextView
+        android:id="@+id/CurrentWiFiData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/placeholder"
+        android:textSize="8pt"
+        android:visibility="visible"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
 
 </RelativeLayout>

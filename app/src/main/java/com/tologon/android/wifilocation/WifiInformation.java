@@ -48,6 +48,10 @@ public class WifiInformation extends AppCompatActivity {
     private final String LOG_TAG = "LOCATION";
     private MyImageView mContentView;
     private Random rng;
+    private final String backLocation = "You are in the back of the CS department.";
+    private final String centerLocation = "You are in the center of the CS department.";
+    private final String frontLocation = "You are in the front of the CS department.";
+    private String lastLocation;
 
 
     @Override
@@ -84,16 +88,19 @@ public class WifiInformation extends AppCompatActivity {
             return NO_LOCATION_IDENTIFICATION;
         }
         else if(closestAP.equals(CS_DEPARTMENT_BACK)) {
-            return "You are in the back of the CS department.";
+            lastLocation = backLocation;
+            return backLocation;
         }
         else if(closestAP.equals(CS_DEPARTMENT_CENTER)) {
-            return "You are in the center of the CS department.";
+            lastLocation = centerLocation;
+            return centerLocation;
         }
         else if(closestAP.equals(CS_DEPARTMENT_FRONT)) {
-            return "You are in the front of the CS department.";
+            lastLocation = frontLocation;
+            return frontLocation;
         }
         else {
-            return NO_LOCATION_IDENTIFICATION;
+            return lastLocation;
         }
     }
 
@@ -178,16 +185,16 @@ public class WifiInformation extends AppCompatActivity {
         public void run() {
             try {
                 //String currentNetwork = getWiFiNetworkInfo();
-//                String currentLocation = getWITLocation();
-//                currentWiFiData.setText(currentLocation);
-//                wifiManager.startScan();
-//                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                String currentLocation = getWITLocation();
+                currentWiFiData.setText(currentLocation);
+                wifiManager.startScan();
+                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 
                 randomlySetRadiuses();
                 findUser();
 
                 mContentView.setUser(userX, userY);
-                String userPosition = "USER POS: " + xyString(userX, userY);
+                //String userPosition = "USER POS: " + xyString(userX, userY);
                 //Toast.makeText(context, userPosition, Toast.LENGTH_SHORT).show();
                 mContentView.invalidate();
             } finally {

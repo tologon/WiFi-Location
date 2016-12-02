@@ -20,9 +20,9 @@ public class MyImageView extends ImageView {
     private int BACK_AP_RADIUS = 50;
 
     private int USER_RADIUS = 20;
-    private int backX = 118, backY = 569;
-    private int centerX = 144, centerY = 1304;
-    private int frontX = 672, frontY = 1424;
+    private int backX = 118, backY = 510;
+    private int centerX = 144, centerY = 1195;
+    private int frontX = 672, frontY = 1285;
     private int userX, userY;
 
 
