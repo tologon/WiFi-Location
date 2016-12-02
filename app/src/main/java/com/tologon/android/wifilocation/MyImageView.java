@@ -44,12 +44,6 @@ public class MyImageView extends ImageView {
         setMapImage();
     }
 
-    public MyImageView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        setPaints();
-        setMapImage();
-    }
-
     private void setMapImage() {
         setImageResource(R.drawable.dobbs_hall_1);
     }
@@ -64,7 +58,43 @@ public class MyImageView extends ImageView {
         userPaint.setAlpha(TRANSPARENCY);
     }
 
-    public void moveUser(int x, int y) {
+    public int getBackX() {
+        return backX;
+    }
+
+    public int getBackY() {
+        return backY;
+    }
+
+    public int getBackRadius() {
+        return BACK_AP_RADIUS;
+    }
+
+    public int getCenterX() {
+        return centerX;
+    }
+
+    public int getCenterY() {
+        return centerY;
+    }
+
+    public int getCenterRadius() {
+        return CENTER_AP_RADIUS;
+    }
+
+    public int getFrontX() {
+        return frontX;
+    }
+
+    public int getFrontY() {
+        return frontY;
+    }
+
+    public int getFrontRadius() {
+        return FRONT_AP_RADIUS;
+    }
+
+    public void setUser(int x, int y) {
         userX = x;
         userY = y;
     }
@@ -77,7 +107,7 @@ public class MyImageView extends ImageView {
         return userY;
     }
 
-    public void changeWifiRadius(int wifiAP, int newRadius) {
+    public void setWifiRadius(int wifiAP, int newRadius) {
         switch (wifiAP) {
             case FRONT:     FRONT_AP_RADIUS = newRadius;
                             break;
@@ -107,14 +137,14 @@ public class MyImageView extends ImageView {
         // WiFi Access Point in the front of CS department
         drawWIFIPoint(frontX, frontY, BACK_AP_RADIUS, canvas);
         // User position
-        drawUser(userX, userY, canvas);
+        drawUser(userX, userY, USER_RADIUS, canvas);
     }
 
     private void drawWIFIPoint(int x, int y, int radius, Canvas canvas) {
         canvas.drawCircle(x, y, radius, wiFiPaint);
     }
 
-    private void drawUser(int x, int y, Canvas canvas) {
+    private void drawUser(int x, int y, int radius, Canvas canvas) {
         canvas.drawCircle(x, y, USER_RADIUS, userPaint);
     }
 }

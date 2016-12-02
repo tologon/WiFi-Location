@@ -169,7 +169,10 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     Runnable mStatusChecker = new Runnable() {
-        int mInterval = 1000; // 1 millisecond = 1,000 value
+        int mInterval = 5000; // 1 millisecond = 1,000 value
+        int minRadius = 100;
+        int maxRadius = 500; // its actually maxRadius - minRadius
+        int userX, userY;
 
         @Override
         public void run() {
@@ -179,15 +182,92 @@ public class WifiInformation extends AppCompatActivity {
 //                currentWiFiData.setText(currentLocation);
 //                wifiManager.startScan();
 //                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-                int x = rng.nextInt(1000) + 2;
-                int y = rng.nextInt(1000) + 2;
-                mContentView.moveUser(x, y);
+
+                randomlySetRadiuses();
+                findUser();
+
+                mContentView.setUser(userX, userY);
+                String userPosition = "USER POS: " + xyString(userX, userY);
+                //Toast.makeText(context, userPosition, Toast.LENGTH_SHORT).show();
                 mContentView.invalidate();
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
         }
+
+        private void randomlySetRadiuses() {
+            int r1 = rng.nextInt(maxRadius) + minRadius;
+            int r2 = rng.nextInt(maxRadius) + minRadius;
+            int r3 = rng.nextInt(maxRadius) + minRadius;
+            mContentView.setWifiRadius(1, r1);
+            mContentView.setWifiRadius(2, r2);
+            mContentView.setWifiRadius(3, r3);
+        }
+
+        private void findUser() {
+            Circle[] circles = populateCircles();
+
+            int top = 0;
+            int bot = 0;
+
+            for (int i=0; i<3; i++) {
+                Circle c = circles[i];
+                Circle c2, c3;
+                if (i==0) {
+                    c2 = circles[1];
+                    c3 = circles[2];
+                }
+                else if (i==1) {
+                    c2 = circles[0];
+                    c3 = circles[2];
+                }
+                else {
+                    c2 = circles[0];
+                    c3 = circles[1];
+                }
+
+                int d = c2.x - c3.x;
+
+                int v1 = (c.x * c.x + c.y * c.y) - (c.r * c.r);
+                top += d*v1;
+
+                int v2 = c.y * d;
+                bot += v2;
+
+            }
+
+            int y = top / (2*bot);
+            Circle c1 = circles[0];
+            Circle c2 = circles[1];
+            top = c2.r*c2.r+c1.x*c1.x+c1.y*c1.y-c1.r*c1.r-c2.x*c2.x-c2.y*c2.y-2*(c1.y-c2.y)*y;
+            bot = c1.x-c2.x;
+            int x = top / (2*bot);
+
+            userX = x;
+            userY = y;
+        }
+
+        private Circle[] populateCircles() {
+            Circle c1 = new Circle();
+            c1.x = mContentView.getBackX();
+            c1.y = mContentView.getBackY();
+            c1.r = mContentView.getBackRadius();
+            Circle c2 = new Circle();
+            c2.x = mContentView.getCenterX();
+            c2.y = mContentView.getCenterY();
+            c2.r = mContentView.getCenterRadius();
+            Circle c3 = new Circle();
+            c3.x = mContentView.getFrontX();
+            c3.y = mContentView.getFrontY();
+            c3.r = mContentView.getFrontRadius();
+            Circle[] circles = {c2, c3, c1};
+            return circles;
+        }
     };
+
+    private class Circle {
+        int x, y, r;
+    }
 
     private void startRepeatingTask() {
         mStatusChecker.run();
