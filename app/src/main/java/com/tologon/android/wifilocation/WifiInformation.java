@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class WifiInformation extends AppCompatActivity {
     private Handler mHandler;
@@ -46,10 +47,12 @@ public class WifiInformation extends AppCompatActivity {
     private int fieldImgXY[] = new int[2];
     private final String LOG_TAG = "LOCATION";
     private MyImageView mContentView;
+    private Random rng;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        rng = new Random();
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wifi_information);
@@ -68,7 +71,7 @@ public class WifiInformation extends AppCompatActivity {
         ));
 
         mHandler = new Handler();
-//        startRepeatingTask();
+        startRepeatingTask();
     }
 
     public String getWITLocation() {
@@ -166,16 +169,20 @@ public class WifiInformation extends AppCompatActivity {
     }
 
     Runnable mStatusChecker = new Runnable() {
-        int mInterval = 10; // 1 millisecond = 1,000 value
+        int mInterval = 1000; // 1 millisecond = 1,000 value
 
         @Override
         public void run() {
             try {
                 //String currentNetwork = getWiFiNetworkInfo();
-                String currentLocation = getWITLocation();
-                currentWiFiData.setText(currentLocation);
-                wifiManager.startScan();
-                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+//                String currentLocation = getWITLocation();
+//                currentWiFiData.setText(currentLocation);
+//                wifiManager.startScan();
+//                registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+                int x = rng.nextInt(1000) + 2;
+                int y = rng.nextInt(1000) + 2;
+                mContentView.moveUser(x, y);
+                mContentView.invalidate();
             } finally {
                 mHandler.postDelayed(mStatusChecker, mInterval);
             }
@@ -203,7 +210,9 @@ public class WifiInformation extends AppCompatActivity {
 
         public void onReceive(Context c, Intent i) {
             adapter.clear();
-            if(!networkStatus()) { return; }
+            if(!networkStatus()) {
+                return;
+            }
 
             /*
             List<ScanResult> scanList = wifiManager.getScanResults();
