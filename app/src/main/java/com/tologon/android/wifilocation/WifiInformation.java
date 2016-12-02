@@ -17,7 +17,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -46,7 +45,7 @@ public class WifiInformation extends AppCompatActivity {
     private final String CS_DEPARTMENT_FRONT = "18:64:72:f3:40:52";
     private int fieldImgXY[] = new int[2];
     private final String LOG_TAG = "LOCATION";
-    private ImageView mContentView;
+    private MyImageView mContentView;
 
 
     @Override
@@ -60,7 +59,8 @@ public class WifiInformation extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, networks);
         wifiListData.setAdapter(adapter);
         setNetworkStatus();
-        mContentView = (ImageView) findViewById(R.id.imageView);
+        mContentView = (MyImageView) findViewById(R.id.imageView);
+        mContentView.setImageResource(R.drawable.dobbs_hall_1);
 
         requestPermission();
         wifiReceiver = new WifiReceiver();
