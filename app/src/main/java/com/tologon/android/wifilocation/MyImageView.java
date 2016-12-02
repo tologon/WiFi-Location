@@ -12,36 +12,58 @@ import android.widget.ImageView;
  */
 
 public class MyImageView extends ImageView {
-    Paint paint;
+    private Paint paint;
+    private final int TRANSPARENCY = 100;
+    private final int RADIUS = 50;
+    private final int MAP_X = 56;
+    private final int MAP_Y = 336;
 
     public MyImageView(Context context) {
         super(context);
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.BLACK);
+        setPaint();
+        setMapImage();
     }
 
     public MyImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.BLACK);
+        setPaint();
+        setMapImage();
     }
 
     public MyImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.BLACK);
+        setPaint();
+        setMapImage();
     }
 
     public MyImageView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        setPaint();
+        setMapImage();
+    }
+
+    private void setMapImage() {
+        setImageResource(R.drawable.dobbs_hall_1);
+    }
+
+    private void setPaint() {
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.BLACK);
+        paint.setColor(Color.GREEN);
+        paint.setAlpha(TRANSPARENCY);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawCircle(1000, 100, 100, paint);
-        //setImageResource(R.drawable.dobbs_hall_1);
+        // WiFi Access Point in the back of CS department
+        drawWIFIPoint(118, 569, canvas);
+        // WiFi Access Point in the back of CS department
+        drawWIFIPoint(144, 1304, canvas);
+        // WiFi Access Point in the back of CS department
+        drawWIFIPoint(672, 1424, canvas);
+    }
+
+    private void drawWIFIPoint(int x, int y, Canvas canvas) {
+        canvas.drawCircle(x, y, RADIUS, paint);
     }
 }

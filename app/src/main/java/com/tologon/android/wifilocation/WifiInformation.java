@@ -60,7 +60,6 @@ public class WifiInformation extends AppCompatActivity {
         wifiListData.setAdapter(adapter);
         setNetworkStatus();
         mContentView = (MyImageView) findViewById(R.id.imageView);
-        mContentView.setImageResource(R.drawable.dobbs_hall_1);
 
         requestPermission();
         wifiReceiver = new WifiReceiver();
